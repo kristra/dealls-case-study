@@ -33,7 +33,7 @@ func Login(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := db.DB.Where("username = ?", req.Username).First(&user).Error; err != nil {
+	if err := db.DB.Preload("Role").First(&user, "users.username = ?", req.Username).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username"})
 		return
 	}
@@ -51,6 +51,6 @@ func Login(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,
-		"user":  gin.H{"id": user.ID, "username": user.Username, "role": user.Role},
+		"user":  gin.H{"id": user.ID, "username": user.Username, "role": user.Role.Name},
 	})
 }
