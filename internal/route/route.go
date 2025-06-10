@@ -19,6 +19,11 @@ func SetupRoutes() {
 	v1 := r.Group("/api/v1")
 	v1.Use(middlewares.AuthMiddleware())
 	{
+		attendance := v1.Group("/attendances")
+		{
+			attendance.POST("/check-in", handlers.CheckInAttendance)
+			attendance.POST("/check-out", handlers.CheckOutAttendance)
+		}
 		payroll := v1.Group("/payrolls")
 		{
 			payroll.POST("/:year/:month", middlewares.AdminOnly(), handlers.UpsertPayroll)

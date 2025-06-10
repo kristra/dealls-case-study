@@ -11,9 +11,9 @@ type Attendance struct {
 	UserID      uint
 	User        User `gorm:"foreignKey:UserID"`
 	Date        time.Time
-	CheckInAt   time.Time
-	CheckOutAt  time.Time
-	HoursWorked float64 `gorm:"not null"`
+	CheckInAt   *time.Time `gorm:"default:null"`
+	CheckOutAt  *time.Time `gorm:"default:null"`
+	HoursWorked float64    `gorm:"not null"`
 	CreatedAt   time.Time
 	CreatedBy   uint
 	UpdatedAt   time.Time
@@ -25,8 +25,8 @@ func (a *Attendance) DateOnlyString() string {
 }
 
 func (a *Attendance) BeforeSave(tx *gorm.DB) (err error) {
-	if !a.CheckInAt.IsZero() && !a.CheckOutAt.IsZero() {
-		duration := a.CheckOutAt.Sub(a.CheckInAt).Hours()
+	if a.CheckInAt != nil && a.CheckOutAt != nil {
+		duration := a.CheckOutAt.Sub(*a.CheckInAt).Hours()
 		if duration < 0 {
 			duration = 0
 		}
