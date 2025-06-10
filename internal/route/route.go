@@ -23,6 +23,7 @@ func SetupRoutes() {
 		{
 			attendance.POST("/check-in", handlers.CheckInAttendance)
 			attendance.POST("/check-out", handlers.CheckOutAttendance)
+			attendance.POST("/overtime", handlers.SubmitOvertime)
 		}
 		payroll := v1.Group("/payrolls")
 		{
