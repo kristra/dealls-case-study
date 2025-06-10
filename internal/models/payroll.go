@@ -7,6 +7,8 @@ import (
 type Payroll struct {
 	ID          uint `gorm:"primaryKey"`
 	Name        string
+	Month       int `gorm:"uniqueIndex:idx_month_year"`
+	Year        int `gorm:"uniqueIndex:idx_month_year"`
 	PeriodStart time.Time
 	PeriodEnd   time.Time
 	Status      string
