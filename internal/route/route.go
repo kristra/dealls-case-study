@@ -26,8 +26,10 @@ func SetupRoutes() {
 			attendance.POST("/overtime", handlers.SubmitOvertime)
 		}
 		payroll := v1.Group("/payrolls")
+		payroll.Use(middlewares.AdminOnly())
 		{
-			payroll.POST("/:year/:month", middlewares.AdminOnly(), handlers.UpsertPayroll)
+			payroll.POST("/:year/:month/run", handlers.RunPayroll)
+			payroll.POST("/:year/:month", handlers.UpsertPayroll)
 		}
 
 		v1.POST("/reimbursements", handlers.SubmitReimbursement)
