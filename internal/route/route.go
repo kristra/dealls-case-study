@@ -2,6 +2,7 @@ package route
 
 import (
 	"dealls-case-study/internal/handlers"
+	"dealls-case-study/internal/middlewares"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -13,15 +14,14 @@ func SetupRoutes() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	r.POST("/auth/login", handlers.Login)
+
 	v1 := r.Group("/api/v1")
+	v1.Use(middlewares.AuthMiddleware())
 	{
-		auth := v1.Group("/auth")
-		{
-			auth.POST("/login", handlers.Login)
-		}
 		payroll := v1.Group("/payrolls")
 		{
-			payroll.POST("/:year/:month", handlers.UpsertPayroll)
+			payroll.POST("/:year/:month", middlewares.AdminOnly(), handlers.UpsertPayroll)
 		}
 	}
 

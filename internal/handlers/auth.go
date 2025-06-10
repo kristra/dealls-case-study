@@ -11,8 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// @BasePath /api/v1
-
 // Login godoc
 // @Summary      User Login
 // @Description  Auntheticate user using username and password

@@ -30,7 +30,15 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user_id", claims["user_id"])
+		val := claims["user_id"]
+		userID := uint(0)
+		if f, ok := val.(float64); ok {
+			userID = uint(f)
+		} else {
+			// handle error
+		}
+
+		c.Set("user_id", userID)
 		c.Set("role", claims["role"])
 		c.Next()
 	}
@@ -39,7 +47,7 @@ func AuthMiddleware() gin.HandlerFunc {
 func AdminOnly() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, ok := c.Get("role")
-		if !ok || role != "admin" {
+		if !ok || role != "Admin" {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
 			return
 		}
