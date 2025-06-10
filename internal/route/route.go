@@ -15,6 +15,10 @@ func SetupRoutes() {
 
 	v1 := r.Group("/api/v1")
 	{
+		auth := v1.Group("/auth")
+		{
+			auth.POST("/login", handlers.Login)
+		}
 		payroll := v1.Group("/payrolls")
 		{
 			payroll.POST("/:year/:month", handlers.UpsertPayroll)
