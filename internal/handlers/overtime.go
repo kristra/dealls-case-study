@@ -7,10 +7,25 @@ import (
 	"dealls-case-study/internal/db"
 	"dealls-case-study/internal/dto"
 	"dealls-case-study/internal/models"
+	"dealls-case-study/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
+// SubmitOvertime godoc
+// @Summary      Submit Overtime for current user
+// @Description  Allows an employee to submit overtime for the current day.
+// @Description  Overtime must be submitted after check-out, and cannot exceed 3 hours per day.
+// @Tags         Attendance
+// @Accept       json
+// @Produce      json
+// @Param        request body     dto.SubmitOvertimeRequest true "Overtime payloads"
+// @Success      200    {object}  dto.SuccessResponse[dto.SubmitOvertimeResponse]
+// @Failure      400    {object}  dto.ErrorResponse
+// @Failure      401    {object}  dto.ErrorResponse
+// @Failure      500    {object}  dto.ErrorResponse
+// @Security     BearerAuth
+// @Router       /attendances/overtime [post]
 func SubmitOvertime(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
@@ -53,5 +68,8 @@ func SubmitOvertime(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, overtime)
+	c.JSON(http.StatusOK, utils.WrapSuccessResponse(dto.SubmitOvertimeResponse{
+		ID:          overtime.ID,
+		HoursWorked: overtime.HoursWorked,
+	}))
 }

@@ -13,15 +13,15 @@ import (
 
 // Login godoc
 // @Summary      User Login
-// @Description  Auntheticate user using username and password
+// @Description  Auntheticates a user using username and password
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
-// @Param        request body     dto.LoginRequest false "Login fields"
-// @Success      200    {object}  map[string]string
-// @Failure      400    {object}  map[string]string
-// @Failure      401    {object}  map[string]string
-// @Failure      500    {object}  map[string]string
+// @Param        request body     dto.LoginRequest true "Login credentials"
+// @Success      200    {object}  dto.SuccessResponse[dto.LoginResponse]
+// @Failure      400    {object}  dto.ErrorResponse
+// @Failure      401    {object}  dto.ErrorResponse
+// @Failure      500    {object}  dto.ErrorResponse
 // @Router       /auth/login [post]
 func Login(c *gin.Context) {
 	var req dto.LoginRequest
@@ -47,8 +47,12 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"token": token,
-		"user":  gin.H{"id": user.ID, "username": user.Username, "role": user.Role.Name},
-	})
+	c.JSON(http.StatusOK, utils.WrapSuccessResponse(dto.LoginResponse{
+		Token: token,
+		User: dto.LoginUser{
+			ID:       user.ID,
+			Username: user.Username,
+			Role:     user.Role.Name,
+		},
+	}))
 }

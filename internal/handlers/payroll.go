@@ -11,6 +11,7 @@ import (
 	"dealls-case-study/internal/db"
 	"dealls-case-study/internal/dto"
 	"dealls-case-study/internal/models"
+	"dealls-case-study/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -21,17 +22,18 @@ import (
 
 // UpsertPayroll godoc
 // @Summary      Upsert payroll
-// @Description  Create or update payroll record for a given month and year
+// @Description  Creates or updates a payroll record for the given month and year.
+// @Description  Only updates payrolls with 'draft' status.
 // @Tags         Payroll
 // @Accept       json
 // @Produce      json
 // @Param        year   path      int  true  "Year"
-// @Param        month  path      int  true  "Month"
-// @Param        request body     dto.UpsertPayrollRequest false "Payroll fields"
-// @Success      200    {object}  models.Payroll
-// @Failure      400    {object}  map[string]string
-// @Failure      401    {object}  map[string]string
-// @Failure      500    {object}  map[string]string
+// @Param        month  path      int  true  "Month (1-12)"
+// @Param        request body     dto.UpsertPayrollRequest false "Payroll optional fields"
+// @Success      200    {object}  dto.SuccessResponse[dto.PayrollResponse]
+// @Failure      400    {object}  dto.ErrorResponse
+// @Failure      401    {object}  dto.ErrorResponse
+// @Failure      500    {object}  dto.ErrorResponse
 // @Security     BearerAuth
 // @Router       /payrolls/{year}/{month} [post]
 func UpsertPayroll(c *gin.Context) {
@@ -81,14 +83,31 @@ func UpsertPayroll(c *gin.Context) {
 		return
 	}
 
-	status := "updated"
-	if result.RowsAffected == 0 {
-		status = "created"
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Payroll " + status, "data": payroll})
+	c.JSON(http.StatusOK, utils.WrapSuccessResponse(dto.PayrollResponse{
+		ID:          payroll.ID,
+		Name:        payroll.Name,
+		PeriodStart: &payroll.PeriodStart,
+		PeriodEnd:   &payroll.PeriodEnd,
+		Status:      payroll.Status,
+	}))
 }
 
+// RunPayroll godoc
+// @Summary      Run payroll
+// @Description  Processes the payroll for the given month and year.
+// @Description  Generates payslips for all employees.
+// @Description  Can only be run once per period. Once run, the payroll status changes to 'pending' or 'completed'.
+// @Tags         Payroll
+// @Accept       json
+// @Produce      json
+// @Param        year   path      int  true  "Year"
+// @Param        month  path      int  true  "Month (1-12)"
+// @Success      200    {object}  dto.SuccessResponse[dto.PayrollResponse]
+// @Failure      400    {object}  dto.ErrorResponse
+// @Failure      401    {object}  dto.ErrorResponse
+// @Failure      500    {object}  dto.ErrorResponse
+// @Security     BearerAuth
+// @Router       /payrolls/{year}/{month}/run [post]
 func RunPayroll(c *gin.Context) {
 	year, err1 := strconv.Atoi(c.Param("year"))
 	month, err2 := strconv.Atoi(c.Param("month"))
@@ -128,7 +147,13 @@ func RunPayroll(c *gin.Context) {
 	// for example the simplest implementation would be a separate worker that processes any `pending` payroll
 	go ProcessPayroll(payroll.ID, userID)
 
-	c.JSON(http.StatusAccepted, gin.H{"message": "payroll processed", "data": payroll})
+	c.JSON(http.StatusOK, utils.WrapSuccessResponse(dto.PayrollResponse{
+		ID:          payroll.ID,
+		Name:        payroll.Name,
+		PeriodStart: &payroll.PeriodStart,
+		PeriodEnd:   &payroll.PeriodEnd,
+		Status:      payroll.Status,
+	}))
 }
 
 func ProcessPayroll(payrollID uint, adminID uint) error {

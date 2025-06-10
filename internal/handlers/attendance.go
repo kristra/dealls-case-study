@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"dealls-case-study/internal/db"
+	"dealls-case-study/internal/dto"
 	"dealls-case-study/internal/models"
+	"dealls-case-study/internal/utils"
 	"net/http"
 	"time"
 
@@ -10,15 +12,16 @@ import (
 )
 
 // CheckInAttendance godoc
-// @Summary      Create attendance
-// @Description  Create attendance record and set check-in based on now value
+// @Summary      Submit check-in for current user
+// @Description  Allows an employee to check in for the current day.
+// @Description  Only one check-in is allowed per day. Check-ins on weekends are not allowed.
 // @Tags         Attendance
 // @Accept       json
 // @Produce      json
-// @Success      200    {object}  models.Attendance
-// @Failure      400    {object}  map[string]string
-// @Failure      401    {object}  map[string]string
-// @Failure      500    {object}  map[string]string
+// @Success      200    {object}  dto.SuccessResponse[dto.AttendanceResponse]
+// @Failure      400    {object}  dto.ErrorResponse
+// @Failure      401    {object}  dto.ErrorResponse
+// @Failure      500    {object}  dto.ErrorResponse
 // @Security     BearerAuth
 // @Router       /attendances/check-in [post]
 func CheckInAttendance(c *gin.Context) {
@@ -51,19 +54,25 @@ func CheckInAttendance(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, newAttendance)
+	c.JSON(http.StatusOK, utils.WrapSuccessResponse(dto.AttendanceResponse{
+		ID:         newAttendance.ID,
+		Date:       newAttendance.Date,
+		CheckInAt:  newAttendance.CheckInAt,
+		CheckOutAt: newAttendance.CheckOutAt,
+	}))
 }
 
 // CheckOutAttendance godoc
-// @Summary      Update attendance
-// @Description  Update attendance record and set check-out based on now value
+// @Summary      Submit check-out for current user
+// @Description  Allows an employee to check out for the current day.
+// @Description  Must have checked in first. Only one check-out is allowed per day. Check-outs on weekends are not allowed.
 // @Tags         Attendance
 // @Accept       json
 // @Produce      json
-// @Success      200    {object}  models.Attendance
-// @Failure      400    {object}  map[string]string
-// @Failure      401    {object}  map[string]string
-// @Failure      500    {object}  map[string]string
+// @Success      200    {object}  dto.SuccessResponse[dto.AttendanceResponse]
+// @Failure      400    {object}  dto.ErrorResponse
+// @Failure      401    {object}  dto.ErrorResponse
+// @Failure      500    {object}  dto.ErrorResponse
 // @Security     BearerAuth
 // @Router       /attendances/check-out [post]
 func CheckOutAttendance(c *gin.Context) {
@@ -97,5 +106,10 @@ func CheckOutAttendance(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, attendance)
+	c.JSON(http.StatusOK, utils.WrapSuccessResponse(dto.AttendanceResponse{
+		ID:         attendance.ID,
+		Date:       attendance.Date,
+		CheckInAt:  attendance.CheckInAt,
+		CheckOutAt: attendance.CheckOutAt,
+	}))
 }
