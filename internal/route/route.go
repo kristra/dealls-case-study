@@ -29,6 +29,8 @@ func SetupRoutes() {
 		{
 			payroll.POST("/:year/:month", middlewares.AdminOnly(), handlers.UpsertPayroll)
 		}
+
+		v1.POST("/reimbursements", handlers.SubmitReimbursement)
 	}
 
 	r.Run()
