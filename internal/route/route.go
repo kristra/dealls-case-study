@@ -33,6 +33,7 @@ func SetupRoutes() {
 		}
 
 		v1.POST("/reimbursements", handlers.SubmitReimbursement)
+		v1.POST("/payslips/:year/:month", handlers.GetPayslip)
 	}
 
 	r.Run()
