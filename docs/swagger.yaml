@@ -1,0 +1,479 @@
+definitions:
+  dto.AttendanceResponse:
+    properties:
+      check_in_at:
+        type: string
+      check_out_at:
+        type: string
+      date:
+        type: string
+      id:
+        type: integer
+    type: object
+  dto.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  dto.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  dto.LoginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/dto.LoginUser'
+    type: object
+  dto.LoginUser:
+    properties:
+      id:
+        type: integer
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  dto.PayrollResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      period_end:
+        type: string
+      period_start:
+        type: string
+      status:
+        type: string
+    type: object
+  dto.PayslipResponse:
+    properties:
+      attendance_breakdown:
+        type: string
+      base_salary:
+        type: number
+      id:
+        type: integer
+      month:
+        type: integer
+      overtime_breakdown:
+        type: string
+      overtime_pay:
+        type: number
+      reimbursement:
+        type: number
+      reimbursement_breakdown:
+        type: string
+      total_hours_worked:
+        type: number
+      total_overtime_hours:
+        type: number
+      total_salary:
+        type: number
+      user_id:
+        type: integer
+      year:
+        type: integer
+    type: object
+  dto.SubmitOvertimeRequest:
+    properties:
+      hours_worked:
+        maximum: 3
+        type: number
+    required:
+    - hours_worked
+    type: object
+  dto.SubmitOvertimeResponse:
+    properties:
+      hours_worked:
+        type: number
+      id:
+        type: integer
+    type: object
+  dto.SubmitReimbursementRequest:
+    properties:
+      amount:
+        type: number
+      description:
+        type: string
+    required:
+    - amount
+    type: object
+  dto.SubmitReimbursementResponse:
+    properties:
+      amount:
+        type: number
+      description:
+        type: string
+      id:
+        type: integer
+    type: object
+  dto.SuccessResponse-dto_AttendanceResponse:
+    properties:
+      data:
+        $ref: '#/definitions/dto.AttendanceResponse'
+      message:
+        type: string
+    type: object
+  dto.SuccessResponse-dto_LoginResponse:
+    properties:
+      data:
+        $ref: '#/definitions/dto.LoginResponse'
+      message:
+        type: string
+    type: object
+  dto.SuccessResponse-dto_PayrollResponse:
+    properties:
+      data:
+        $ref: '#/definitions/dto.PayrollResponse'
+      message:
+        type: string
+    type: object
+  dto.SuccessResponse-dto_PayslipResponse:
+    properties:
+      data:
+        $ref: '#/definitions/dto.PayslipResponse'
+      message:
+        type: string
+    type: object
+  dto.SuccessResponse-dto_SubmitOvertimeResponse:
+    properties:
+      data:
+        $ref: '#/definitions/dto.SubmitOvertimeResponse'
+      message:
+        type: string
+    type: object
+  dto.SuccessResponse-dto_SubmitReimbursementResponse:
+    properties:
+      data:
+        $ref: '#/definitions/dto.SubmitReimbursementResponse'
+      message:
+        type: string
+    type: object
+  dto.UpsertPayrollRequest:
+    properties:
+      name:
+        type: string
+      period_end:
+        type: string
+      period_start:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Documentation for Payroll and Payslip management.
+  title: Payslip System API
+  version: "1.0"
+paths:
+  /attendances/check-in:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Allows an employee to check in for the current day.
+        Only one check-in is allowed per day. Check-ins on weekends are not allowed.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse-dto_AttendanceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit check-in for current user
+      tags:
+      - Attendance
+  /attendances/check-out:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Allows an employee to check out for the current day.
+        Must have checked in first. Only one check-out is allowed per day. Check-outs on weekends are not allowed.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse-dto_AttendanceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit check-out for current user
+      tags:
+      - Attendance
+  /attendances/overtime:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Allows an employee to submit overtime for the current day.
+        Overtime must be submitted after check-out, and cannot exceed 3 hours per day.
+      parameters:
+      - description: Overtime payloads
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SubmitOvertimeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse-dto_SubmitOvertimeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit Overtime for current user
+      tags:
+      - Attendance
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Auntheticates a user using username and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse-dto_LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: User Login
+      tags:
+      - Auth
+  /payrolls/{year}/{month}:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Creates or updates a payroll record for the given month and year.
+        Only updates payrolls with 'draft' status.
+      parameters:
+      - description: Year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Month (1-12)
+        in: path
+        name: month
+        required: true
+        type: integer
+      - description: Payroll optional fields
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/dto.UpsertPayrollRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse-dto_PayrollResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Upsert payroll
+      tags:
+      - Payroll
+  /payrolls/{year}/{month}/run:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Processes the payroll for the given month and year.
+        Generates payslips for all employees.
+        Can only be run once per period. Once run, the payroll status changes to 'pending' or 'completed'.
+      parameters:
+      - description: Year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Month (1-12)
+        in: path
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse-dto_PayrollResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Run payroll
+      tags:
+      - Payroll
+  /payslips/{year}/{month}:
+    get:
+      description: Fetches payslip for a specific month and year
+      parameters:
+      - description: Year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Month
+        in: path
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse-dto_PayslipResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get payslip for current user
+      tags:
+      - Payslip
+  /reimbursements:
+    post:
+      consumes:
+      - application/json
+      description: Allows an employee to submit a reimbursement request.
+      parameters:
+      - description: Reimbursement data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SubmitReimbursementRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse-dto_SubmitReimbursementResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit reimbursement for current user
+      tags:
+      - Reimbursements
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

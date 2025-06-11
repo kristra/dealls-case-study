@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	_ "dealls-case-study/docs"
 	"dealls-case-study/internal/db"
 	_ "dealls-case-study/internal/dto"
 
