@@ -6,6 +6,7 @@
 
 - Go 1.20+
 - PostgreSQL (recommended version 13+)
+- Docker (optional, for running integrations tests)
 
 ---
 
@@ -69,10 +70,22 @@ Your server will start on:
 
 ## 🧪 Running Tests
 
-### Unit & Integration Tests
+### ✅ Run All Tests (Unit + Integration)
 
 ```bash
 go test ./...
+```
+
+### ✅ Run Unit Tests Only (Exclude Integration)
+
+```bash
+go test $(go list ./... | grep -v /internal/handlers)
+```
+
+### ✅ Run Integration Tests Only
+
+```bash
+go test ./internal/handlers
 ```
 
 ---
