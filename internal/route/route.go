@@ -30,6 +30,7 @@ func SetupRoutes() {
 		{
 			payroll.POST("/:year/:month/run", handlers.RunPayroll)
 			payroll.POST("/:year/:month", handlers.UpsertPayroll)
+			payroll.GET("/:year/:month/summary", handlers.GeneratePayrollSummary)
 		}
 
 		v1.POST("/reimbursements", handlers.SubmitReimbursement)

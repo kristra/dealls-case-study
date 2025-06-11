@@ -348,6 +348,71 @@ const docTemplate = `{
                 }
             }
         },
+        "/payrolls/{year}/{month}/summary": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generates a summary of all employee payslips for a given month and year.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payroll"
+                ],
+                "summary": "Get payroll summary",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Year",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Month",
+                        "name": "month",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SuccessResponse-dto_PayrollSummaryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/payslips/{year}/{month}": {
             "get": {
                 "security": [
@@ -466,6 +531,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.AttendanceBreakdownItem": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.AttendanceResponse": {
             "type": "object",
             "properties": {
@@ -480,6 +553,29 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                }
+            }
+        },
+        "dto.EmployeePayslipBrief": {
+            "type": "object",
+            "properties": {
+                "base_salary": {
+                    "type": "number"
+                },
+                "overtime_pay": {
+                    "type": "number"
+                },
+                "reimbursement": {
+                    "type": "number"
+                },
+                "total_pay": {
+                    "type": "number"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -531,6 +627,17 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.OvertimeBreakdownItem": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "hours_worked": {
+                    "type": "number"
+                }
+            }
+        },
         "dto.PayrollResponse": {
             "type": "object",
             "properties": {
@@ -551,13 +658,49 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.PayrollSummaryResponse": {
+            "type": "object",
+            "properties": {
+                "month": {
+                    "type": "integer"
+                },
+                "payroll_id": {
+                    "type": "integer"
+                },
+                "payslips": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.EmployeePayslipBrief"
+                    }
+                },
+                "total_salaries": {
+                    "type": "number"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.PayslipResponse": {
             "type": "object",
             "properties": {
                 "attendance_breakdown": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.AttendanceBreakdownItem"
+                    }
                 },
                 "base_salary": {
+                    "description": "summary totals",
+                    "type": "number"
+                },
+                "days_attended": {
+                    "type": "integer"
+                },
+                "expected_working_days": {
+                    "type": "integer"
+                },
+                "hourly_rate": {
                     "type": "number"
                 },
                 "id": {
@@ -566,19 +709,33 @@ const docTemplate = `{
                 "month": {
                     "type": "integer"
                 },
+                "monthly_salary": {
+                    "description": "calculation context",
+                    "type": "number"
+                },
                 "overtime_breakdown": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.OvertimeBreakdownItem"
+                    }
                 },
                 "overtime_pay": {
+                    "type": "number"
+                },
+                "overtime_rate_per_hour": {
                     "type": "number"
                 },
                 "reimbursement": {
                     "type": "number"
                 },
                 "reimbursement_breakdown": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ReimbursementBreakdownItem"
+                    }
                 },
                 "total_hours_worked": {
+                    "description": "breakdowns",
                     "type": "number"
                 },
                 "total_overtime_hours": {
@@ -592,6 +749,20 @@ const docTemplate = `{
                 },
                 "year": {
                     "type": "integer"
+                }
+            }
+        },
+        "dto.ReimbursementBreakdownItem": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
                 }
             }
         },
@@ -679,6 +850,17 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.SuccessResponse-dto_PayrollSummaryResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.PayrollSummaryResponse"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.SuccessResponse-dto_PayslipResponse": {
             "type": "object",
             "properties": {
@@ -742,7 +924,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Payslip System API",
+	Title:            "Payroll System API",
 	Description:      "Documentation for Payroll and Payslip management.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

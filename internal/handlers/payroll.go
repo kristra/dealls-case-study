@@ -249,6 +249,70 @@ func GeneratePayslip(tx *gorm.DB, adminID uint, user models.User, payroll *model
 	return payslip, nil
 }
 
+// GetPayrollSummary godoc
+// @Summary      Get payroll summary
+// @Description  Generates a summary of all employee payslips for a given month and year.
+// @Tags         Payroll
+// @Security     BearerAuth
+// @Produce      json
+// @Param        year   path      int  true  "Year"
+// @Param        month  path      int  true  "Month"
+// @Success      200    {object}  dto.SuccessResponse[dto.PayrollSummaryResponse]
+// @Failure      400    {object}  dto.ErrorResponse
+// @Failure      401    {object}  dto.ErrorResponse
+// @Failure      403    {object}  dto.ErrorResponse
+// @Failure      500    {object}  dto.ErrorResponse
+// @Router       /payrolls/{year}/{month}/summary [get]
+func GeneratePayrollSummary(c *gin.Context) {
+	year, err1 := strconv.Atoi(c.Param("year"))
+	month, err2 := strconv.Atoi(c.Param("month"))
+	if err1 != nil || err2 != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid year or month"})
+		return
+	}
+
+	var payroll models.Payroll
+
+	if err := db.DB.Where("year = ? AND month = ?", year, month).First(&payroll).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "payroll record not found"})
+		return
+	}
+
+	if payroll.Status != models.PayrollStatusProcessed {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "payroll has not been processed"})
+		return
+	}
+
+	var payslips []models.Payslip
+	if err := db.DB.
+		Preload("User").
+		Where("payroll_id = ?", payroll.ID).
+		Find(&payslips).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch payslips"})
+		return
+	}
+
+	var summary dto.PayrollSummaryResponse
+	summary.PayrollID = payroll.ID
+	summary.Year = payroll.Year
+	summary.Month = payroll.Month
+	summary.Payslips = make([]dto.EmployeePayslipBrief, 0)
+
+	for _, p := range payslips {
+		summary.TotalSalaries += p.TotalSalary
+		summary.Payslips = append(summary.Payslips, dto.EmployeePayslipBrief{
+			UserID:        p.UserID,
+			Username:      p.User.Username,
+			BaseSalary:    p.BaseSalary,
+			OvertimePay:   p.OvertimePay,
+			Reimbursement: p.Reimbursement,
+			TotalPay:      p.TotalSalary,
+		})
+	}
+
+	c.JSON(http.StatusOK, utils.WrapSuccessResponse(summary))
+}
+
 func toJSON[T any](v T) string {
 	b, err := json.Marshal(v)
 	if err != nil {

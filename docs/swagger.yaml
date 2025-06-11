@@ -1,4 +1,9 @@
 definitions:
+  dto.AttendanceBreakdownItem:
+    properties:
+      date:
+        type: string
+    type: object
   dto.AttendanceResponse:
     properties:
       check_in_at:
@@ -9,6 +14,21 @@ definitions:
         type: string
       id:
         type: integer
+    type: object
+  dto.EmployeePayslipBrief:
+    properties:
+      base_salary:
+        type: number
+      overtime_pay:
+        type: number
+      reimbursement:
+        type: number
+      total_pay:
+        type: number
+      user_id:
+        type: integer
+      username:
+        type: string
     type: object
   dto.ErrorResponse:
     properties:
@@ -41,6 +61,13 @@ definitions:
       username:
         type: string
     type: object
+  dto.OvertimeBreakdownItem:
+    properties:
+      date:
+        type: string
+      hours_worked:
+        type: number
+    type: object
   dto.PayrollResponse:
     properties:
       id:
@@ -54,25 +81,59 @@ definitions:
       status:
         type: string
     type: object
+  dto.PayrollSummaryResponse:
+    properties:
+      month:
+        type: integer
+      payroll_id:
+        type: integer
+      payslips:
+        items:
+          $ref: '#/definitions/dto.EmployeePayslipBrief'
+        type: array
+      total_salaries:
+        type: number
+      year:
+        type: integer
+    type: object
   dto.PayslipResponse:
     properties:
       attendance_breakdown:
-        type: string
+        items:
+          $ref: '#/definitions/dto.AttendanceBreakdownItem'
+        type: array
       base_salary:
+        description: summary totals
+        type: number
+      days_attended:
+        type: integer
+      expected_working_days:
+        type: integer
+      hourly_rate:
         type: number
       id:
         type: integer
       month:
         type: integer
+      monthly_salary:
+        description: calculation context
+        type: number
       overtime_breakdown:
-        type: string
+        items:
+          $ref: '#/definitions/dto.OvertimeBreakdownItem'
+        type: array
       overtime_pay:
+        type: number
+      overtime_rate_per_hour:
         type: number
       reimbursement:
         type: number
       reimbursement_breakdown:
-        type: string
+        items:
+          $ref: '#/definitions/dto.ReimbursementBreakdownItem'
+        type: array
       total_hours_worked:
+        description: breakdowns
         type: number
       total_overtime_hours:
         type: number
@@ -82,6 +143,15 @@ definitions:
         type: integer
       year:
         type: integer
+    type: object
+  dto.ReimbursementBreakdownItem:
+    properties:
+      amount:
+        type: number
+      date:
+        type: string
+      description:
+        type: string
     type: object
   dto.SubmitOvertimeRequest:
     properties:
@@ -137,6 +207,13 @@ definitions:
       message:
         type: string
     type: object
+  dto.SuccessResponse-dto_PayrollSummaryResponse:
+    properties:
+      data:
+        $ref: '#/definitions/dto.PayrollSummaryResponse'
+      message:
+        type: string
+    type: object
   dto.SuccessResponse-dto_PayslipResponse:
     properties:
       data:
@@ -170,7 +247,7 @@ definitions:
 info:
   contact: {}
   description: Documentation for Payroll and Payslip management.
-  title: Payslip System API
+  title: Payroll System API
   version: "1.0"
 paths:
   /attendances/check-in:
@@ -395,6 +472,49 @@ paths:
       security:
       - BearerAuth: []
       summary: Run payroll
+      tags:
+      - Payroll
+  /payrolls/{year}/{month}/summary:
+    get:
+      description: Generates a summary of all employee payslips for a given month
+        and year.
+      parameters:
+      - description: Year
+        in: path
+        name: year
+        required: true
+        type: integer
+      - description: Month
+        in: path
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse-dto_PayrollSummaryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get payroll summary
       tags:
       - Payroll
   /payslips/{year}/{month}:
