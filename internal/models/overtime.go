@@ -9,7 +9,7 @@ type Overtime struct {
 	UserID      uint
 	User        User `gorm:"foreignKey:UserID"`
 	Date        time.Time
-	HoursWorked float64 `gorm:"not null"`
+	HoursWorked float64 `gorm:"not null" json:"hours_worked"`
 	CreatedAt   time.Time
 	CreatedBy   uint
 	UpdatedAt   time.Time

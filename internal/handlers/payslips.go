@@ -82,12 +82,11 @@ func GetPayslip(c *gin.Context) {
 		TotalSalary:   payslip.TotalSalary,
 
 		// calculation context
-		MonthlySalary: payslip.User.Salary,
-		// in real application this would be a orgs config or db value
-		ExpectedWorkingDays: 22,
-		DaysAttended:        len(aB),
-		HourlyRate:          payslip.User.Salary / 160,
-		OvertimeRatePerHour: (payslip.User.Salary / 160) * 2,
+		MonthlySalary:       payslip.User.Salary,
+		ExpectedWorkingDays: payslip.ExpectedWorkingDays,
+		DaysAttended:        payslip.DaysAttended,
+		HourlyRate:          payslip.HourlyRate,
+		OvertimeRatePerHour: payslip.OvertimeRatePerHour,
 
 		// breakdowns
 		TotalHoursWorked:       payslip.TotalHoursWorked,

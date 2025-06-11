@@ -225,25 +225,43 @@ func GeneratePayslip(tx *gorm.DB, adminID uint, user models.User, payroll *model
 		totalReimbursement += r.Amount
 	}
 
-	basePay := float64(daysWorked) / 22 * user.Salary
-	overtimePay := totalOvertime * (user.Salary / 160) * 2
+	expectedWorkingDays := utils.CountWeekdays(payroll.PeriodStart, payroll.PeriodEnd)
+	// flat 8 hours per days worked
+	hourlyRate := user.Salary / float64(expectedWorkingDays) / 8
+	overtimeRatePerHour := hourlyRate * 2
+	proratedDaysWorked := float64(daysWorked) / float64(expectedWorkingDays)
+
+	basePay := proratedDaysWorked * user.Salary
+	overtimePay := totalOvertime * hourlyRate * 2
 	totalPay := basePay + overtimePay + totalReimbursement
 
 	payslip := models.Payslip{
-		Month:                  payroll.Month,
-		Year:                   payroll.Year,
-		UserID:                 user.ID,
-		PayrollID:              payroll.ID,
-		BaseSalary:             basePay,
-		OvertimePay:            overtimePay,
-		Reimbursement:          totalReimbursement,
-		TotalSalary:            totalPay,
+		Month:     payroll.Month,
+		Year:      payroll.Year,
+		UserID:    user.ID,
+		PayrollID: payroll.ID,
+
+		// summary totals
+		BaseSalary:    basePay,
+		OvertimePay:   overtimePay,
+		Reimbursement: totalReimbursement,
+		TotalSalary:   totalPay,
+
+		// calculation context
+		MonthlySalary:       user.Salary,
+		ExpectedWorkingDays: expectedWorkingDays,
+		DaysAttended:        daysWorked,
+		HourlyRate:          hourlyRate,
+		OvertimeRatePerHour: overtimeRatePerHour,
+
+		// breakdowns
 		TotalHoursWorked:       totalHours,
 		TotalOvertimeHours:     totalOvertime,
 		AttendanceBreakdown:    toJSON(attendances),
 		OvertimeBreakdown:      toJSON(overtimes),
 		ReimbursementBreakdown: toJSON(reimbursements),
-		CreatedBy:              adminID,
+
+		CreatedBy: adminID,
 	}
 
 	return payslip, nil
