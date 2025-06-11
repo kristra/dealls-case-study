@@ -41,6 +41,23 @@ func main() {
 			}
 		}
 
+	case "init":
+		{
+			err := db.DropDatabase()
+			if err != nil {
+				log.Fatalf("failed dropping db: %v", err)
+			}
+			err = db.CreateDatabase()
+			if err != nil {
+				log.Fatalf("failed creating db: %v", err)
+			}
+			db.InitDB()
+			err = seed.Run(db.DB)
+			if err != nil {
+				log.Fatalf("failed seeding data: %v", err)
+			}
+		}
+
 	// helper function to easily test salary calculations
 	case "seed44":
 		{

@@ -6,8 +6,6 @@
 
 - Go 1.20+
 - PostgreSQL (recommended version 13+)
-- Git
-- Make (optional, for scripts)
 
 ---
 
@@ -16,8 +14,8 @@
 1. **Clone the repository**
 
 ```bash
-git
-cd
+git clone git@github.com:kristra/dealls-case-study.git
+cd dealls-case-study
 ```
 
 2. **Set up environment variables**
@@ -43,16 +41,25 @@ go mod tidy
 
 ## 🧑‍💻 Running Locally
 
-### 1. Create PostgreSQL database
+### 1. Create PostgreSQL Database and Seed Initial Data
 
 ```bash
-
+go run cmd/script/main.go init
 ```
+
+This command will:
+
+- Create the database using the environment variables configured in `.env`
+- Seed the following data:
+
+  - 2 default roles: `Admin`, `Employee`
+  - 1 admin user
+  - 100 employee users, each with a salary, username, and password
 
 ### 2. Run the application
 
 ```bash
-
+go run cmd/app/main.go
 ```
 
 Your server will start on:
@@ -93,9 +100,12 @@ go test ./...
 
 ## 🧠 Credentials & Helpers
 
-```sql
-
-```
+> All users created by the seed script use the default password `"password"` and have incremental usernames:
+> `user1`, `user2`, ..., `user100`.
+>
+> These users are assigned the **Employee** role, and their salaries increase with their ID (e.g. `user1` has salary `1000`, `user2` has `2000`, etc.).
+>
+> An **admin** user is also created with username `"admin"` and the same password.
 
 ---
 
@@ -169,7 +179,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ## 👤 Attendance
 
-### `POST /attendances/check-in`
+### `POST /api/v1/attendances/check-in`
 
 Check-in for the current day.
 
@@ -192,7 +202,7 @@ Check-in for the current day.
 
 ---
 
-### `POST /attendances/check-out`
+### `POST /api/v1/attendances/check-out`
 
 Check-out for the current day.
 
@@ -216,7 +226,7 @@ Check-out for the current day.
 
 ---
 
-### `POST /attendances/overtime`
+### `POST /api/v1/attendances/overtime`
 
 Submit overtime for the current day.
 
@@ -247,7 +257,7 @@ Submit overtime for the current day.
 
 ## 💵 Reimbursements
 
-### `POST /reimbursements`
+### `POST /api/v1/reimbursements`
 
 Submit a reimbursement request.
 
@@ -277,7 +287,9 @@ Submit a reimbursement request.
 
 ## 🧮 Payroll
 
-### `POST /payrolls/{year}/{month}`
+All `/api/v1/payrolls` routes require authentication with a **Bearer token** belonging to a user with the **Admin** role.
+
+### `POST /api/v1/payrolls/{year}/{month}`
 
 Create or update a payroll for the specified year and month.
 
@@ -308,7 +320,7 @@ Create or update a payroll for the specified year and month.
 
 ---
 
-### `POST /payrolls/{year}/{month}/run`
+### `POST /api/v1/payrolls/{year}/{month}/run`
 
 Run payroll generation for the specified year and month.
 
@@ -334,9 +346,47 @@ Run payroll generation for the specified year and month.
 
 ---
 
+### `GET /api/v1/payrolls/{year}/{month}/summary`
+
+Returns a summary of all employee payslips for the specified month and year.
+
+#### Response (200 OK)
+
+```json
+{
+  "message": "success",
+  "data": {
+    "payroll_id": 1,
+    "year": 2025,
+    "month": 6,
+    "total_take_home": 109000000,
+    "payslips": [
+      {
+        "user_id": 2,
+        "username": "johndoe",
+        "base_salary": 4000000,
+        "overtime_pay": 100000,
+        "reimbursement": 50000,
+        "total_pay": 4150000
+      },
+      {
+        "user_id": 3,
+        "username": "janedoe",
+        "base_salary": 4500000,
+        "overtime_pay": 200000,
+        "reimbursement": 100000,
+        "total_pay": 4800000
+      }
+    ]
+  }
+}
+```
+
+---
+
 ## 🧾 Payslip
 
-### `GET /payslips/{year}/{month}`
+### `GET /api/v1/payslips/{year}/{month}`
 
 Get the payslip for the authenticated user for the specified period.
 
@@ -350,15 +400,31 @@ Get the payslip for the authenticated user for the specified period.
     "user_id": 2,
     "month": 6,
     "year": 2025,
-    "base_salary": 4200000,
-    "overtime_pay": 200000,
-    "reimbursement": 100000,
-    "total_salary": 4500000,
+    "base_salary": 40000,
+    "overtime_pay": 4000,
+    "reimbursement": 1000,
+    "total_salary": 45000,
+    "monthly_salary": 44000,
+    "expected_working_days": 22,
+    "days_attended": 20,
+    "hourly_rate": 250,
+    "overtime_rate_per_hour": 500,
     "total_hours_worked": 160,
-    "total_overtime_hours": 10,
-    "attendance_breakdown": "...",
-    "overtime_breakdown": "...",
-    "reimbursement_breakdown": "..."
+    "total_overtime_hours": 8,
+    "attendance_breakdown": [
+      { "date": "2025-06-01" },
+      { "date": "2025-06-02" },
+      ...
+    ],
+    "overtime_breakdown": [
+      { "date": "2025-06-08", "hours_worked": 2 },
+      { "date": "2025-06-09", "hours_worked": 2 },
+      ...
+    ],
+    "reimbursement_breakdown": [
+      { "date": "2025-06-10", "amount": 500, "description": "Taxi to office" },
+      { "date": "2025-06-12", "amount": 500, "description": "Client lunch" }
+    ]
   }
 }
 ```
