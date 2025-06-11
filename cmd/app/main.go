@@ -12,7 +12,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// @title        Payslip System API
+// @title        Payroll System API
 // @version      1.0
 // @description  Documentation for Payroll and Payslip management.
 // @securityDefinitions.apikey BearerAuth
