@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -39,6 +40,7 @@ func GetPayslip(c *gin.Context) {
 
 	var payslip models.Payslip
 	err := db.DB.
+		Preload("User").
 		Where("user_id = ? AND year = ? AND month = ?", userID, year, month).
 		First(&payslip).Error
 	if err != nil {
@@ -46,19 +48,52 @@ func GetPayslip(c *gin.Context) {
 		return
 	}
 
+	var aB []dto.AttendanceBreakdownItem
+	err = json.Unmarshal([]byte(payslip.AttendanceBreakdown), &aB)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	var oB []dto.OvertimeBreakdownItem
+	err = json.Unmarshal([]byte(payslip.OvertimeBreakdown), &oB)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	var rB []dto.ReimbursementBreakdownItem
+	err = json.Unmarshal([]byte(payslip.ReimbursementBreakdown), &rB)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
 	c.JSON(http.StatusOK, utils.WrapSuccessResponse(dto.PayslipResponse{
-		ID:                     payslip.ID,
-		Month:                  payslip.Month,
-		Year:                   payslip.Year,
-		UserID:                 payslip.UserID,
-		BaseSalary:             payslip.BaseSalary,
-		OvertimePay:            payslip.OvertimePay,
-		Reimbursement:          payslip.Reimbursement,
-		TotalSalary:            payslip.TotalSalary,
+		ID:     payslip.ID,
+		Month:  payslip.Month,
+		Year:   payslip.Year,
+		UserID: payslip.UserID,
+
+		// summary totals
+		BaseSalary:    payslip.BaseSalary,
+		OvertimePay:   payslip.OvertimePay,
+		Reimbursement: payslip.Reimbursement,
+		TotalSalary:   payslip.TotalSalary,
+
+		// calculation context
+		MonthlySalary: payslip.User.Salary,
+		// in real application this would be a orgs config or db value
+		ExpectedWorkingDays: 22,
+		DaysAttended:        len(aB),
+		HourlyRate:          payslip.User.Salary / 160,
+		OvertimeRatePerHour: (payslip.User.Salary / 160) * 2,
+
+		// breakdowns
 		TotalHoursWorked:       payslip.TotalHoursWorked,
 		TotalOvertimeHours:     payslip.TotalOvertimeHours,
-		AttendanceBreakdown:    payslip.AttendanceBreakdown,
-		OvertimeBreakdown:      payslip.OvertimeBreakdown,
-		ReimbursementBreakdown: payslip.ReimbursementBreakdown,
+		AttendanceBreakdown:    aB,
+		OvertimeBreakdown:      oB,
+		ReimbursementBreakdown: rB,
 	}))
 }
