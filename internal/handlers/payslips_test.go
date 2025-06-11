@@ -66,9 +66,9 @@ func setupTestDBForPayslip() (func(), error) {
 		TotalSalary:            5300,
 		TotalHoursWorked:       160,
 		TotalOvertimeHours:     10,
-		AttendanceBreakdown:    "Full attendance",
-		OvertimeBreakdown:      "10 hours in total",
-		ReimbursementBreakdown: "Travel expenses",
+		AttendanceBreakdown:    "[]",
+		OvertimeBreakdown:      "[]",
+		ReimbursementBreakdown: "[]",
 	}
 	if err := d.Create(&payslip).Error; err != nil {
 		return nil, err
